@@ -40,8 +40,8 @@ def actualizar_sueldos_desde_excel(ruta_excel, conexion_db):
             
             # Ejecutar consulta (dividimos el sueldo mensual entre suesal y sueldopro)
             cursor.execute(sql, (
-                sueldo_mensual / 2,  # suesal - la mitad del sueldo mensual
-                sueldo_mensual / 2,  # sueldopro - la otra mitad del sueldo mensual
+                sueldo_mensual,  # suesal - la mitad del sueldo mensual
+                sueldo_mensual,  # sueldopro - la otra mitad del sueldo mensual
                 gasto_rep,
                 sueldo_diario,
                 rata_hora,
