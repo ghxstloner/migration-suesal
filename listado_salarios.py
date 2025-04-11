@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import pymysql
+import numpy as np
 
 # Leer el archivo Excel
 def actualizar_sueldos_desde_excel(ruta_excel, conexion_db):
@@ -21,11 +22,12 @@ def actualizar_sueldos_desde_excel(ruta_excel, conexion_db):
             personal_txt = str(fila['Personal']).strip()
             ficha = re.search(r'E0*(\d+)', personal_txt).group(1)
             
-            # Valores a actualizar
-            sueldo_mensual = float(fila['SueldoMensual'])
-            gasto_rep = float(fila['Gasto Rep'])
-            sueldo_diario = float(fila['SueldoDiario'])
-            rata_hora = float(fila['RataHora'])
+            # Valores a actualizar, con manejo de NaN
+            # Reemplazar NaN con None (que se convierte en NULL en MySQL)
+            sueldo_mensual = fila['SueldoMensual'] if not pd.isna(fila['SueldoMensual']) else None
+            gasto_rep = fila['Gasto Rep'] if not pd.isna(fila['Gasto Rep']) else None
+            sueldo_diario = fila['SueldoDiario'] if not pd.isna(fila['SueldoDiario']) else None
+            rata_hora = fila['RataHora'] if not pd.isna(fila['RataHora']) else None
             
             # Preparar y ejecutar consulta SQL para actualizar
             sql = """
@@ -38,10 +40,10 @@ def actualizar_sueldos_desde_excel(ruta_excel, conexion_db):
             WHERE ficha = %s
             """
             
-            # Ejecutar consulta (dividimos el sueldo mensual entre suesal y sueldopro)
+            # Ejecutar consulta
             cursor.execute(sql, (
-                sueldo_mensual,  # suesal - la mitad del sueldo mensual
-                sueldo_mensual,  # sueldopro - la otra mitad del sueldo mensual
+                sueldo_mensual,  # suesal
+                sueldo_mensual,  # sueldopro
                 gasto_rep,
                 sueldo_diario,
                 rata_hora,
@@ -49,6 +51,7 @@ def actualizar_sueldos_desde_excel(ruta_excel, conexion_db):
             ))
             
             actualizados += 1
+            print(f"Actualizado registro con ficha {ficha}")
             
         except Exception as e:
             print(f"Error procesando fila {index+1} ({personal_txt}): {str(e)}")
@@ -63,7 +66,6 @@ def actualizar_sueldos_desde_excel(ruta_excel, conexion_db):
 # Función principal
 def main():
     # Configuración de la conexión a la base de datos
-    # (Ajusta estos valores según tu configuración)
     config_db = {
         'host': 'localhost',
         'user': 'root',
